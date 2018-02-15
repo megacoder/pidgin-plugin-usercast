@@ -20,25 +20,30 @@
 # SOFTWARE.
 #
 
-CFLAGS := $(shell pkg-config --cflags pidgin) -fPIC -O2 -Wall -pedantic -pipe
-LDFLAGS := -shared
-LIBS := $(shell pkg-config --libs pidgin)
+CC	=gcc -march=native -std=gnu99
+CFLAGS	=-O3 -fPIC -Wall -pedantic -pipe
+CFLAGS	+= `pkg-config --cflags pidgin`
 
-TARGET := usercast.so
+LDFLAGS	=-shared
+
+LDLIBS	=`pkg-config --libs pidgin`
+
 PREFIX := /usr/local
-LIBDIR := $(PREFIX)/lib
+LIBDIR := ${PREFIX}/lib64
 
-SOURCES := $(wildcard *.c)
-OBJECTS := $(patsubst %.c, %.o, $(SOURCES))
+SOURCES := ${wildcard *.c}
+OBJECTS := ${patsubst %.c, %.o, ${SOURCES}}
 
-all: $(TARGET)
+all:: usercast.so
 
-$(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) $(LIBS) $^ -o $@ $(LDFLAGS)
+usercast.so:: ${OBJECTS} usercast.h
+	${CC} -o $@ ${CFLAGS} ${LDFLAGS} ${LDLIBS} $^
 
-install: $(TARGET)
-	mkdir -p $(DESTDIR)/$(LIBDIR)/pidgin
-	cp $^ $(DESTDIR)/$(LIBDIR)/pidgin
+install:: usercast.so
+	install $^ ${DESTDIR}${LIBDIR}/pidgin/$^
 
-clean:
-	rm -f $(OBJECTS) $(TARGET)
+clean::
+	${RM} *.o a.out core*
+
+clobber distclean:: clean
+	${RM} usercast.so
